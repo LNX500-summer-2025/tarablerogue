@@ -4,6 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 #include <stdlib.h>
+#include <time.h>
 #include "main.h"
 
 int Random::range( int min, int max ) {
@@ -16,5 +17,6 @@ int Random::range( int min, int max ) {
 }
 
 void Random::init( void ) {
-    sranddev( );
+    //sranddev( );
+    srand( time( NULL ) );
 }
