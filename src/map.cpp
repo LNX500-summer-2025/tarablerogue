@@ -176,12 +176,13 @@ std::vector< AStarNode >::iterator findNodeWithin2( Vector2D& pos, std::vector< 
     return vec.end( );
 }
 
-int MapClass::isThereAPathBetween( Vector2D a, Vector2D b ) {
+std::vector< Vector2D > MapClass::getAPathBetween( Vector2D a, Vector2D b ) {
     // F is the total cost of the node.
     // G is the distance between the current node and the start node.
     // H is the heuristic — estimated distance from the current node to the end node.
     std::vector< AStarNode* > openList;
     std::vector< AStarNode* > closedList;
+    std::vector< Vector2D > returnPath;
     AStarNode* curNode = nullptr;
     AStarNode* childNode = nullptr;
     bool found = false;
@@ -195,19 +196,20 @@ int MapClass::isThereAPathBetween( Vector2D a, Vector2D b ) {
         openList.erase( openList.begin( ) );
         closedList.push_back( curNode );
 
-        screen.putTile( tileDebug, curNode->pos );
-        screen.update( );
+        //screen.putTile( tileDebug, curNode->pos );
+        //screen.update( );
 
         if ( curNode->pos == b ) {
+            // for ( AStarNode* n = curNode->parent; n != nullptr; n = n->parent ) {
+            //     screen.putTile( tileDebug2, n->pos );
+            //     screen.update( );
+            // }
+
             for ( AStarNode* n = curNode->parent; n != nullptr; n = n->parent ) {
-                screen.putTile( tileDebug2, n->pos );
-                screen.update( );
+                returnPath.push_back( n->pos );
             }
 
-            // found
-            getch( );
-
-            return 1;
+            break;
         }
 
         for ( Vector2D i : this->walkableNeighbours[ curNode->pos.x + ( curNode->pos.y * this->mapWidth ) ] ) {
@@ -242,7 +244,7 @@ int MapClass::isThereAPathBetween( Vector2D a, Vector2D b ) {
         }
     }
 
-    return 0;
+    return returnPath;
 }
 
 std::list< Vector2D > MapClass::getWalkableNeighboursAt( Vector2D point ) {

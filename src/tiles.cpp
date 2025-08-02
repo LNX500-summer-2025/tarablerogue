@@ -24,4 +24,5 @@ TileClass tilePlayer( 0, '@', 0, COLOR_CYAN, COLOR_BLACK, A_BOLD );
 TileClass tileDebug( 10, 'X', 1, COLOR_MAGENTA, COLOR_BLACK, A_BOLD );
 TileClass tileDebug2( 10, 'Y', 1, COLOR_YELLOW, COLOR_BLACK, A_BOLD );
 TileClass tileDebug3( 10, 'D', 1, COLOR_GREEN, COLOR_BLACK, A_BOLD );
+TileClass tileGoal( 8, 'G', 1, COLOR_RED, COLOR_BLACK, A_BOLD | A_BLINK );
 

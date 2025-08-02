@@ -33,5 +33,6 @@ extern TileClass tilePlayer;
 extern TileClass tileDebug;
 extern TileClass tileDebug2;
 extern TileClass tileDebug3;
+extern TileClass tileGoal;
 
 #endif

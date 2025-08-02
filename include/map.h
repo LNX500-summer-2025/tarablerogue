@@ -102,7 +102,7 @@ public:
 
     TileClass* getTileAt( Vector2D p );
 
-    int isThereAPathBetween( Vector2D a, Vector2D B );
+    std::vector< Vector2D > getAPathBetween( Vector2D a, Vector2D B );
 
     std::list< Vector2D > getWalkableNeighboursAt( Vector2D point );
     //std::list< BFSNode > getWalkableNodesAt( BFSNode& parent );

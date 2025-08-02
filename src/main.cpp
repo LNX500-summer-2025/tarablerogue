@@ -1,129 +1,149 @@
 #include "main.h"
 
+int generateLevel( void );
+bool endScreen( void );
+
+MapClass* level = NULL;
 ScreenClass screen;
 
-#if 0
-int main( void ) {
-    std::vector< AStarNode > openList;
-    AStarNode rootNode( Vector2D( 0, 0 ) );
-
-    openList.push_back( rootNode );
-    openList.push_back( AStarNode( Vector2D( ), 1 ) );
-    openList.push_back( AStarNode( Vector2D( ), 3 ) );
-    openList.push_back( AStarNode( Vector2D( ), 2 ) );
-    openList.push_back( AStarNode( Vector2D( ), 5 ) );
-
-    std::sort( openList.begin( ), openList.end( ) );
-
-    for ( AStarNode& i : openList ) {
-        printw( "f: %d\n", i.f );
-    }
-
-    printf( "\n\n\n" );
-
-    AStarNode low = openList.back( );
-    openList.pop_back( );
-
-    printw( "low f: %d\n", low.f );
-
-    refresh( );
-    getch( );
-
-    endwin( );
-    return 0;
-}
-#endif
-
-#if 1
-void test( void ) {
-    CellularClass* water = NULL;
-
-    water = new CellularWater( screen.getWidth( ), screen.getHeight( ) );
-
-    if ( water != nullptr ) {
-        water->reset( );
-        water->runGeneration( 5 );
-
-        screen.drawCellBoard( *water );
-        screen.update( );
-
-        getch( );
-    }
-}
-
-PlayerClass player( Vector2D( 0, 0 ) );
-
-int main( void ) {
+int generateLevel( void ) {
     CellularClass* border = NULL;
     CellularClass* grass = NULL;
     CellularClass* water = NULL;
 
-    Random::init( );
+    if ( ( level = new MapClass( screen.getWidth( ), screen.getHeight( ) ) ) == nullptr )
+        return -1;
 
-    //test( );
-
-    MapClass* map = new MapClass( screen.getWidth( ), screen.getHeight( ) );
-
-    if ( ( border = new CellularBorder( screen.getWidth( ), screen.getHeight( ) ) ) != nullptr ) {
-        border->reset( );
-        border->runGeneration( 5 );
-    }
-
+    border = new CellularBorder( screen.getWidth( ), screen.getHeight( ) );
     water = new CellularWater( screen.getWidth( ), screen.getHeight( ) );
+    grass = new CellularGrass( screen.getWidth( ), screen.getHeight( ) );
 
-    if ( water != nullptr ) {
-        water->reset( );
-        water->runGeneration( 5 );
+    if ( ! border || ! water || ! grass ) {
+        if ( border )
+            delete border;
+
+        if ( water )
+            delete water;
+
+        if ( grass )
+            delete grass;
+
+        return -1;
     }
 
-    if ( ( grass = new CellularGrass( screen.getWidth( ), screen.getHeight( ) ) ) != nullptr ) {
-        grass->reset( );
-        grass->runGeneration( 1 );
+    border->reset( );
+    border->runGeneration( 5 );
 
-        map->copyFromCellular( *grass, &tileGrassA, &tileGrassB );
-        map->addFromCellular( *border, &tileMountain );
-        map->addFromCellular( *water, &tileWater );
-    
-        map->draw( );
-        getch( );
-        
-        Vector2D rng;
-        Vector2D goal;
+    water->reset( );
+    water->runGeneration( 5 );
 
-        map->getRandomWalkablePoint( goal, 5 );
+    grass->reset( );
+    grass->runGeneration( 1 );
 
-        if ( map->getRandomWalkablePoint( rng, 5 ) == 0 ) {
-            player.setPosition( rng );
-        }
+    level->copyFromCellular( *grass, &tileGrassA, &tileGrassB );
+    level->addFromCellular( *border, &tileMountain );
+    level->addFromCellular( *water, &tileWater );
 
-        //player.draw( );
-
-        screen.putTile( tilePlayer, rng );
-        screen.putTile( tilePlayer, goal );
-
-        screen.update( );
-
-        getch( );
-
-        map->isThereAPathBetween( rng, goal );
-
-        // std::list< Vector2D > n = map->getWalkableNeighboursAt( player.getPosititon( ) );
-
-        // for ( Vector2D i : n ) {
-        //     screen.putTile( tileDebug, i );
-        // }
-
-        screen.update( );
-
-        getch( );
-
-        delete grass;
-        delete border;
-    }
-
-    //screen.putTile( tileMountain, 1, 1 );
-    screen.update( );
+    delete border;
+    delete water;
+    delete grass;
 
     return 0;
 }
-#endif
+
+bool endScreen( void ) {
+    int yellow = screen.getAttribForColor( COLOR_YELLOW, COLOR_BLACK ) | A_BOLD;
+
+    clear( );
+
+    attron( yellow );
+        mvprintw( ( LINES / 2 ) - 1, ( COLS / 2 ) - 22, "YOU'RE ARE AN WINNER!" );
+    attroff( yellow );
+
+    mvprintw( ( LINES / 2 ), ( COLS / 2 ) - 33, "PRESS START TO PLAY AGAIN OR SELECT TO EXIT" );
+
+    return ( getch( ) == 'q' ) ? false : true;
+}
+
+int main( void ) {
+    Vector2D newPlayerPos;
+    Vector2D playerPos;
+    Vector2D goalPos;
+    bool run = true;
+    bool goodMap = false;
+    bool gameLoop = true;
+    int c = 0;
+
+    Random::init( );
+
+    endScreen( );
+
+    while ( run ) {
+        do {
+            if ( generateLevel( ) == 0 ) {
+                level->getRandomWalkablePoint( playerPos, 10 );
+                level->getRandomWalkablePoint( goalPos, 10 );
+
+                goodMap = ( level->getAPathBetween( playerPos, goalPos ) ).empty( ) ? false : true;
+
+                level->draw( );
+                screen.update( );
+            }
+        } while ( goodMap == false );
+
+        gameLoop = true;
+
+        while ( gameLoop ) {
+            level->draw( );
+
+            screen.putTile( tilePlayer, playerPos );
+            screen.putTile( tileGoal, goalPos );
+
+            screen.update( );
+
+            c = getch( );
+
+            switch ( c ) {
+                case 'w':
+                case 'W': {
+                    newPlayerPos = playerPos + Vector2D( 0, -1 );
+                    break;
+                }
+                case 'a':
+                case 'A': {
+                    newPlayerPos = playerPos + Vector2D( -1, 0 );
+                    break;
+                }
+                case 's':
+                case 'S': {
+                    newPlayerPos = playerPos + Vector2D( 0, 1 );
+                    break;
+                }
+                case 'd':
+                case 'D': {
+                    newPlayerPos = playerPos + Vector2D( 1, 0 );
+                    break;
+                }
+                case 'q':
+                case 'Q': {
+                    gameLoop = false;
+                    run = false;
+
+                    break;
+                }
+            };
+
+            if ( level->isPointWalkable( newPlayerPos ) )
+                playerPos = newPlayerPos;
+
+            if ( playerPos == goalPos ) {
+                if ( endScreen( ) == false )
+                    run = false;
+
+                gameLoop = false;
+            }
+        }
+    }
+
+    return 0;
+}
